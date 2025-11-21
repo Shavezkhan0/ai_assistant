@@ -33,7 +33,8 @@ class Settings(BaseSettings):
         env_file=".env",
         case_sensitive=False,
         extra="allow",
-        populate_by_name=True  # Allow both alias and field name
+        populate_by_name=True,  # Allow both alias and field name
+        protected_namespaces=('settings_',)  # Fix model_provider warning
     )
 
 @lru_cache()
