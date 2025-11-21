@@ -1,5 +1,6 @@
 // API service for backend communication
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Remove trailing slash if present to avoid double slashes in URLs
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
 
 export const chatAPI = {
   // Send a chat message
