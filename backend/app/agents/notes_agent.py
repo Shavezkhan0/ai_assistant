@@ -59,6 +59,17 @@ class NotesAgent:
         try:
             print(f"\n🔍 Searching for: {query}")
             
+            query_lower = query.lower().strip()
+            
+            # Check if query is actually about notes/studies or just casual
+            casual_indicators = [
+                'how are you', 'what are you', 'who are you', 'where are you',
+                'what do you do', 'what can you do', 'tell me about yourself',
+                'what is this', 'what is that', 'explain yourself'
+            ]
+            
+            is_casual_question = any(indicator in query_lower for indicator in casual_indicators)
+            
             # Search for similar content in ChromaDB
             search_results = vector_db.search(query, n_results=5)
             
@@ -85,7 +96,6 @@ class NotesAgent:
             if len(pdf_files) == 0:
                 print("⚠️  No PDFs found in metadata, trying topic search...")
                 # Extract potential topic from query
-                query_lower = query.lower()
                 # Try to find topic keywords
                 for metadata in metadatas[:3]:
                     topic = metadata.get("topic", "")
@@ -100,15 +110,25 @@ class NotesAgent:
             # Create context from retrieved chunks
             context = "\n\n".join(documents[:5])
             
-            # Generate AI response
-            prompt = f"""Based on the following notes content, answer the user's question.
+            # Generate AI response with better prompt for casual questions
+            if is_casual_question:
+                prompt = f"""You are a helpful college AI assistant. The user asked: "{query}"
+
+The following notes content was found, but this question seems to be about you or a casual conversation, not about the notes themselves.
+
+Notes Content (for context only):
+{context}
+
+Please respond naturally and helpfully. If the question is about you, explain that you're a college AI assistant that helps with notes, results, and syllabus. Be friendly and conversational. Don't force information from the notes if it's not relevant to the question."""
+            else:
+                prompt = f"""Based on the following notes content, answer the user's question.
 
 Question: {query}
 
 Notes Content:
 {context}
 
-Please provide a helpful answer based on the notes. If you're explaining concepts, be clear and educational."""
+Please provide a helpful answer based on the notes. If you're explaining concepts, be clear and educational. If the question doesn't relate to the notes content, politely say so and offer to help with what you can."""
 
             print(f"💭 Generating AI response...")
             llm_response = llm_service.generate_response(prompt)

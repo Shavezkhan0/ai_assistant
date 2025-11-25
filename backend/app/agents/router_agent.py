@@ -15,8 +15,52 @@ class RouterAgent:
         """
         Route query to appropriate agent
         """
-        query_lower = query.lower()
+        query_lower = query.lower().strip()
         import re
+        
+        # Check for casual greetings and simple questions first
+        greeting_patterns = [
+            r'^(hi|hello|hey|greetings|good morning|good afternoon|good evening|sup|what\'?s up|howdy)',
+            r'^(how are you|how do you do|what\'?s going on|how\'?s it going)',
+            r'^(thanks|thank you|thx|ty)',
+            r'^(bye|goodbye|see you|farewell)',
+            r'^(yes|no|ok|okay|sure|alright|fine)',
+            r'^(please|help|can you|could you)',
+        ]
+        
+        is_greeting = any(re.match(pattern, query_lower) for pattern in greeting_patterns)
+        
+        # Also check if query is very short and doesn't contain academic keywords
+        is_short_casual = (
+            len(query.split()) <= 3 and 
+            not any(keyword in query_lower for keyword in [
+                'result', 'marks', 'syllabus', 'notes', 'pdf', 'course', 'subject',
+                'grade', 'cgpa', 'enrollment', 'student', 'semester', 'unit'
+            ])
+        )
+        
+        if is_greeting or is_short_casual:
+            print(f"👋 Detected greeting/casual query")
+            # Generate friendly response
+            if 'hi' in query_lower or 'hello' in query_lower or 'hey' in query_lower:
+                response = "Hello! 👋 I'm your College AI Assistant. I can help you with:\n\n• 📚 **Notes** - Find study materials and PDFs\n• 📊 **Results** - Check your grades and marks\n• 📖 **Syllabus** - Get course structure and curriculum\n\nWhat would you like to know?"
+            elif 'how are you' in query_lower:
+                response = "I'm doing great, thank you for asking! 😊 I'm here to help you with your college studies. What can I assist you with today?\n\nYou can ask me about:\n• Notes and study materials\n• Your results and grades\n• Course syllabus and curriculum"
+            elif 'thank' in query_lower or 'thanks' in query_lower:
+                response = "You're welcome! 😊 Feel free to ask if you need anything else!"
+            elif 'bye' in query_lower or 'goodbye' in query_lower:
+                response = "Goodbye! 👋 Feel free to come back anytime if you need help with your studies!"
+            else:
+                response = "Hi there! 👋 I'm your College AI Assistant. How can I help you today?\n\nI can assist with:\n• 📚 Finding notes and study materials\n• 📊 Checking your results and grades\n• 📖 Getting course syllabus information\n\nWhat would you like to know?"
+            
+            return {
+                "response": response,
+                "sources": [],
+                "pdf_files": [],
+                "has_pdfs": False,
+                "agent": "router_agent",
+                "result_data": None
+            }
         
         # Check if query is about results
         result_keywords = [
